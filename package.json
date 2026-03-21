@@ -1,0 +1,48 @@
+{
+  "name": "netbeep",
+  "version": "1.1.5",
+  "description": "Check live service status from the terminal",
+  "type": "module",
+  "bin": {
+    "netbeep": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx index.ts"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "status",
+    "monitoring",
+    "cli",
+    "devops",
+    "uptime",
+    "downdetector",
+    "service-status"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lugnut29/netbeep-cli.git"
+  },
+  "homepage": "https://netbeep.com",
+  "bugs": {
+    "url": "https://github.com/lugnut29/netbeep-cli/issues"
+  },
+  "author": "lugnut29",
+  "files": [
+    "dist",
+    "bin"
+  ]
+}
