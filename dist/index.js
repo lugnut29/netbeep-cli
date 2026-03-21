@@ -1,13 +1,18 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import { dashboardCommand } from "./commands/dashboard.js";
 import { serviceCommand } from "./commands/service.js";
 import { watchCommand } from "./commands/watch.js";
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
 const program = new Command();
 program
     .name("netbeep")
     .description("Check live service status from the terminal")
-    .version("1.1.6")
+    .version(pkg.version)
     .argument("[services...]", "Service IDs to check (e.g. shopify github)")
     .option("--exit-code", "Exit with non-zero code if any service is degraded or down")
     .option("-d, --detail", "Show detailed card with components and incidents")

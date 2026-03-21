@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { fetchStatuses } from "../lib/fetch.js";
 import { getFormat } from "../lib/format.js";
-import { statusBar } from "../lib/box.js";
+import { statusBar, uptimeLabel } from "../lib/box.js";
 
 export async function watchCommand(serviceIds: string[], intervalSec: number) {
   const specific = serviceIds.length > 0;
@@ -38,9 +38,10 @@ export async function watchCommand(serviceIds: string[], intervalSec: number) {
       for (const svc of entries) {
         const fmt = getFormat(svc.status);
         const name = (svc.name || svc.id).padEnd(20);
-        const bar = statusBar(svc.status);
+        const bar = statusBar(svc.status, svc.uptime);
+        const pct = uptimeLabel(svc.status, svc.uptime);
         const label = svc.status.replace(/_/g, " ");
-        console.log(`${fmt.color(fmt.symbol)} ${name} ${bar}  ${fmt.color(label)}`);
+        console.log(`${fmt.color(fmt.symbol)} ${name} ${bar} ${pct}  ${fmt.color(label)}`);
       }
 
       console.log();

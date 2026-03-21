@@ -1,10 +1,10 @@
 import chalk from "chalk";
-import { fetchStatuses } from "../lib/fetch.js";
+import { fetchStatuses, type ServiceStatus } from "../lib/fetch.js";
 import { getFormat } from "../lib/format.js";
-import { boxTop, boxBottom, boxDivider, boxLine, statusBar } from "../lib/box.js";
+import { boxTop, boxBottom, boxDivider, boxLine, statusBar, uptimeLabel, uptimeWeekLabel, responseMsLabel, timelineBar } from "../lib/box.js";
 import { createSpinner } from "../lib/spinner.js";
 
-const WIDTH = Math.min(process.stdout.columns || 80, 52);
+const WIDTH = Math.min(process.stdout.columns || 80, 58);
 
 export async function serviceCommand(serviceIds: string[], useExitCode: boolean, detail: boolean) {
   const label = serviceIds.length === 1
@@ -41,24 +41,17 @@ export async function serviceCommand(serviceIds: string[], useExitCode: boolean,
 }
 
 function printCompactLine(
-  svc: { id: string; name: string; status: string },
+  svc: ServiceStatus,
   fmt: { symbol: string; color: (s: string) => string },
 ) {
   const name = (svc.name || svc.id).padEnd(20);
-  const bar = statusBar(svc.status);
+  const bar = statusBar(svc.status, svc.uptime);
   const label = svc.status.replace(/_/g, " ");
   console.log(`${fmt.color(fmt.symbol)} ${name} ${bar}  ${fmt.color(label)}`);
 }
 
 function printDetailCard(
-  svc: {
-    id: string;
-    name: string;
-    status: string;
-    description?: string;
-    components?: { name: string; status: string }[];
-    incidents?: { title: string; status: string; timestamp: number }[];
-  },
+  svc: ServiceStatus,
   fmt: { symbol: string; color: (s: string) => string },
 ) {
   const label = svc.status.replace(/_/g, " ");
@@ -74,7 +67,29 @@ function printDetailCard(
     console.log(boxLine(chalk.dim(svc.description), WIDTH));
   }
 
-  console.log(boxLine(`  ${statusBar(svc.status)}`, WIDTH));
+  // Uptime bar + percentages
+  const weekLabel = uptimeWeekLabel(svc.uptime);
+  const uptimeLine = `  ${statusBar(svc.status, svc.uptime)} ${uptimeLabel(svc.status, svc.uptime)}` +
+    (weekLabel ? `  ${weekLabel}` : "");
+  console.log(boxLine(uptimeLine, WIDTH));
+
+  // Response time
+  const respLabel = responseMsLabel(svc.responseMs);
+  if (respLabel) {
+    console.log(boxLine(`  ${respLabel}`, WIDTH));
+  }
+
+  // Last checked
+  if (svc.lastChecked) {
+    console.log(boxLine(`  ${chalk.dim("Checked: " + timeSince(svc.lastChecked))}`, WIDTH));
+  }
+
+  // Timeline
+  const tlBar = timelineBar(svc.timeline);
+  if (tlBar) {
+    console.log(boxLine("", WIDTH));
+    console.log(boxLine(`  ${tlBar}`, WIDTH));
+  }
 
   if (svc.components && svc.components.length > 0) {
     console.log(boxDivider(WIDTH));

@@ -8,8 +8,11 @@ export interface ServiceStatus {
   status: string;
   description?: string;
   lastChecked: number;
+  responseMs?: number;
+  uptime?: { day: number; week: number };
   components?: { name: string; status: string }[];
   incidents?: { title: string; status: string; timestamp: number }[];
+  timeline?: { status: string; timestamp: number }[];
 }
 
 export interface StatusBlob {

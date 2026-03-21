@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/TEMDATA/Products/**)",
+      "Bash(node -e \"const d=require\\(''./data/services.json''\\); console.log\\(''Total services:'', d.length\\); console.log\\(''Categories:'', [...new Set\\(d.map\\(s=>s.category\\)\\)]\\)\")",
+      "Bash(npm run:*)",
+      "Bash(node dist/index.js --version)",
+      "Bash(node dist/index.js)",
+      "Bash(node dist/index.js github --detail)",
+      "Bash(node dist/index.js github shopify)",
+      "Bash(node dist/index.js nonexistent --exit-code)",
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(node dist/index.js --json)"
+    ]
+  }
+}

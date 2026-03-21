@@ -57,9 +57,9 @@ export async function dashboardCommand() {
         for (const svc of svcs) {
             const fmt = getFormat(svc.status);
             const name = (svc.name || svc.id).padEnd(18).slice(0, 18);
-            const bar = statusBar(svc.status);
-            const pct = uptimeLabel(svc.status);
-            const line = `${fmt.color(fmt.symbol)} ${chalk.white(name)} ${bar} ${chalk.dim(pct)}`;
+            const bar = statusBar(svc.status, svc.uptime);
+            const pct = uptimeLabel(svc.status, svc.uptime);
+            const line = `${fmt.color(fmt.symbol)} ${chalk.white(name)} ${bar} ${pct}`;
             console.log(boxLine(line, WIDTH));
         }
     }

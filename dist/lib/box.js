@@ -25,37 +25,73 @@ export function stripAnsi(str) {
 }
 // ── Status bar ──
 const BAR_LENGTH = 10;
-export function statusBar(status) {
-    const fills = {
-        operational: 10,
-        degraded: 7,
-        partial_outage: 5,
-        major_outage: 1,
-        maintenance: 10,
-        unknown: 0,
-    };
-    const fill = fills[status] ?? 0;
+const STATUS_FILLS = {
+    operational: 10,
+    degraded: 7,
+    partial_outage: 5,
+    major_outage: 1,
+    maintenance: 10,
+    unknown: 0,
+};
+const STATUS_COLORS = {
+    operational: chalk.green,
+    degraded: chalk.yellow,
+    partial_outage: chalk.yellow,
+    major_outage: chalk.red,
+    maintenance: chalk.blue,
+    unknown: chalk.gray,
+};
+export function statusBar(status, uptime) {
+    const fill = uptime != null
+        ? Math.round((uptime.day / 100) * BAR_LENGTH)
+        : (STATUS_FILLS[status] ?? 0);
     const empty = BAR_LENGTH - fill;
-    const colorFn = {
-        operational: chalk.green,
-        degraded: chalk.yellow,
-        partial_outage: chalk.yellow,
-        major_outage: chalk.red,
-        maintenance: chalk.blue,
-        unknown: chalk.gray,
-    };
-    const color = colorFn[status] ?? chalk.gray;
+    const color = STATUS_COLORS[status] ?? chalk.gray;
     return color("█".repeat(fill)) + chalk.dim("░".repeat(empty));
 }
 // ── Uptime percentage ──
-export function uptimeLabel(status) {
-    const map = {
-        operational: "100%",
-        degraded: " 98%",
-        partial_outage: " 72%",
-        major_outage: "down",
-        maintenance: " mnt",
-        unknown: "  ? ",
-    };
-    return map[status] ?? "  ? ";
+const STATUS_UPTIME_FALLBACK = {
+    operational: "100%",
+    degraded: " 98%",
+    partial_outage: " 72%",
+    major_outage: "down",
+    maintenance: " mnt",
+    unknown: "  ? ",
+};
+function uptimeColor(pct) {
+    if (pct >= 99.9)
+        return chalk.green;
+    if (pct >= 99)
+        return chalk.yellow;
+    return chalk.red;
+}
+export function uptimeLabel(status, uptime) {
+    if (uptime != null) {
+        const color = uptimeColor(uptime.day);
+        return color(`${uptime.day.toFixed(1)}%`);
+    }
+    return STATUS_UPTIME_FALLBACK[status] ?? "  ? ";
+}
+export function uptimeWeekLabel(uptime) {
+    if (uptime == null)
+        return "";
+    const color = uptimeColor(uptime.week);
+    return chalk.dim("7d:") + color(`${uptime.week.toFixed(1)}%`);
+}
+// ── Response time ──
+export function responseMsLabel(ms) {
+    if (ms == null)
+        return "";
+    const color = ms < 200 ? chalk.green : ms < 400 ? chalk.yellow : chalk.red;
+    return chalk.dim("Resp: ") + color(`${ms}ms`);
+}
+// ── Timeline bar (24h, 48 × 30-min buckets) ──
+export function timelineBar(timeline) {
+    if (!timeline || timeline.length === 0)
+        return "";
+    const blocks = timeline.map((bucket) => {
+        const color = STATUS_COLORS[bucket.status] ?? chalk.gray;
+        return color("▓");
+    });
+    return chalk.dim("24h ") + blocks.join("") + chalk.dim(" now");
 }
