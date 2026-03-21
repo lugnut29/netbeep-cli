@@ -10,7 +10,7 @@ const program = new Command();
 program
   .name("netbeep")
   .description("Check live service status from the terminal")
-  .version("1.1.5")
+  .version("1.1.6")
   .argument("[services...]", "Service IDs to check (e.g. shopify github)")
   .option("--exit-code", "Exit with non-zero code if any service is degraded or down")
   .option("-d, --detail", "Show detailed card with components and incidents")
