@@ -119,7 +119,7 @@ Useful in CI pipelines to gate deploys on upstream dependency health.
 
 ## API
 
-The CLI reads from `GET https://netbeep.com/api/status`. No auth required. Supports `?service=aws,stripe` for filtering. Response is cached at the edge for 120s.
+The CLI reads from `GET https://netbeep.com/api/status`. No auth required. Supports `?service=aws,stripe` for filtering. Responses may be up to 1 minute old due to edge caching.
 
 ## License
 
