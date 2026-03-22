@@ -9,10 +9,42 @@ export const BOX = {
 } as const;
 
 export function boxLine(content: string, width: number): string {
-  // Strip ANSI to measure visible length
+  const visWidth = displayWidth(content);
+  const maxContent = width - 2;
+
+  if (visWidth <= maxContent) {
+    const pad = maxContent - visWidth;
+    return `${chalk.dim(BOX.v)} ${content}${" ".repeat(pad)}${chalk.dim(BOX.v)}`;
+  }
+
+  // Word-wrap on visible text, then re-style each line
   const visible = stripAnsi(content);
-  const pad = Math.max(0, width - 2 - visible.length);
-  return `${chalk.dim(BOX.v)} ${content}${" ".repeat(pad)}${chalk.dim(BOX.v)}`;
+  const indent = visible.length - visible.trimStart().length;
+  const prefix = visible.slice(0, indent);
+  const words = visible.trimStart().split(" ");
+  const wrapped: string[] = [];
+  let cur = prefix;
+
+  for (const word of words) {
+    const test = cur.length === 0 ? word : cur + " " + word;
+    if (displayWidth(test) > maxContent && displayWidth(cur) > displayWidth(prefix)) {
+      wrapped.push(cur);
+      cur = prefix + word;
+    } else {
+      cur = test;
+    }
+  }
+  if (cur.length > 0) wrapped.push(cur);
+
+  // Find the style (ANSI codes) at the start of the content and apply to each wrapped line
+  const ansiPrefix = content.match(/^(\x1b\[[0-9;]*m)*/)?.[0] ?? "";
+  const ansiReset = ansiPrefix ? "\x1b[0m" : "";
+
+  return wrapped.map((line) => {
+    const pad = Math.max(0, maxContent - displayWidth(line));
+    const styled = ansiPrefix + line + ansiReset;
+    return `${chalk.dim(BOX.v)} ${styled}${" ".repeat(pad)}${chalk.dim(BOX.v)}`;
+  }).join("\n");
 }
 
 export function boxTop(width: number): string {
@@ -29,6 +61,32 @@ export function boxDivider(width: number): string {
 
 export function stripAnsi(str: string): string {
   return str.replace(/\x1b\[[0-9;]*m/g, "");
+}
+
+// ── Display width ──
+// Measures how many terminal columns a string occupies.
+// Handles double-width characters (emoji, CJK, misc symbols).
+
+function isDoubleWidth(code: number): boolean {
+  // Emoticons / Misc Symbols & Pictographs (actual emoji)
+  if (code >= 0x1F300 && code <= 0x1F9FF) return true;
+  // CJK Unified Ideographs
+  if (code >= 0x4E00 && code <= 0x9FFF) return true;
+  // CJK Compatibility Ideographs
+  if (code >= 0xF900 && code <= 0xFAFF) return true;
+  // Fullwidth Forms
+  if (code >= 0xFF01 && code <= 0xFF60) return true;
+  return false;
+}
+
+export function displayWidth(str: string): number {
+  const clean = stripAnsi(str);
+  let width = 0;
+  for (const ch of clean) {
+    const code = ch.codePointAt(0)!;
+    width += isDoubleWidth(code) ? 2 : 1;
+  }
+  return width;
 }
 
 // ── Status bar ──

@@ -1,26 +1,14 @@
 import chalk from "chalk";
 import { fetchStatuses } from "../lib/fetch.js";
 import { getFormat } from "../lib/format.js";
-import { boxTop, boxBottom, boxDivider, boxLine, statusBar, uptimeLabel } from "../lib/box.js";
+import { statusBar, uptimeLabel } from "../lib/box.js";
 import { createSpinner } from "../lib/spinner.js";
-const CATEGORY_LABELS = {
-    ecommerce: "Ecommerce",
-    cloud: "Cloud",
-    devtools: "Dev Tools",
-    communication: "Comms",
-    social: "Social",
-    productivity: "Productivity",
-    security: "Security",
-    "cdn-dns": "CDN / DNS",
-    monitoring: "Monitoring",
-    payments: "Payments",
-    ai: "AI",
-};
-const WIDTH = Math.min(process.stdout.columns || 80, 56);
-export async function dashboardCommand() {
+import { CATEGORY_LABELS, filterByCategories } from "../lib/categories.js";
+export async function dashboardCommand(categoryFilter) {
     const spinner = createSpinner("loading dashboard...");
-    const { services, updatedAt } = await fetchStatuses();
+    const { services: allServices, updatedAt } = await fetchStatuses();
     spinner.stop();
+    const services = categoryFilter ? filterByCategories(allServices, categoryFilter) : allServices;
     const entries = Object.values(services).sort((a, b) => {
         const aOp = a.status === "operational" ? 1 : 0;
         const bOp = b.status === "operational" ? 1 : 0;
@@ -40,33 +28,27 @@ export async function dashboardCommand() {
     }
     // ── Header ──
     console.log();
-    console.log(boxTop(WIDTH));
-    console.log(boxLine(chalk.bold("netbeep") + chalk.dim("  ·  status dashboard"), WIDTH));
-    console.log(boxLine("", WIDTH));
-    // Summary line
-    const summary = chalk.dim(`${entries.length} services  `) +
+    console.log(chalk.bold("netbeep") + chalk.dim("  ·  status dashboard"));
+    console.log(chalk.dim(`${entries.length} services  `) +
         chalk.green(`${operational} up`) +
-        (issues > 0 ? chalk.red(`  ${issues} issues`) : chalk.dim("  0 issues"));
-    console.log(boxLine(summary, WIDTH));
+        (issues > 0 ? chalk.red(`  ${issues} issues`) : chalk.dim("  0 issues")));
     // ── Categories ──
     for (const [cat, svcs] of groups) {
-        console.log(boxDivider(WIDTH));
+        console.log();
         const label = CATEGORY_LABELS[cat] ?? cat.toUpperCase();
-        console.log(boxLine(chalk.bold.white(label), WIDTH));
-        console.log(boxLine("", WIDTH));
+        console.log(chalk.bold.white(label));
+        console.log(chalk.dim("─".repeat(44)));
         for (const svc of svcs) {
             const fmt = getFormat(svc.status);
             const name = (svc.name || svc.id).padEnd(18).slice(0, 18);
             const bar = statusBar(svc.status, svc.uptime);
             const pct = uptimeLabel(svc.status, svc.uptime);
-            const line = `${fmt.color(fmt.symbol)} ${chalk.white(name)} ${bar} ${pct}`;
-            console.log(boxLine(line, WIDTH));
+            console.log(`${fmt.color(fmt.symbol)} ${chalk.white(name)} ${bar} ${pct}`);
         }
     }
     // ── Footer ──
-    console.log(boxDivider(WIDTH));
+    console.log();
     const ts = new Date(updatedAt).toLocaleTimeString();
-    console.log(boxLine(chalk.dim(`Updated ${ts}`), WIDTH));
-    console.log(boxBottom(WIDTH));
+    console.log(chalk.dim(`Updated ${ts}`));
     console.log();
 }

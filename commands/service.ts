@@ -1,12 +1,10 @@
 import chalk from "chalk";
 import { fetchStatuses, type ServiceStatus } from "../lib/fetch.js";
 import { getFormat } from "../lib/format.js";
-import { boxTop, boxBottom, boxDivider, boxLine, statusBar, uptimeLabel, uptimeWeekLabel, responseMsLabel, timelineBar } from "../lib/box.js";
+import { statusBar, uptimeLabel, uptimeWeekLabel, responseMsLabel, timelineBar } from "../lib/box.js";
 import { createSpinner } from "../lib/spinner.js";
 
-const WIDTH = Math.min(process.stdout.columns || 80, 58);
-
-export async function serviceCommand(serviceIds: string[], useExitCode: boolean, detail: boolean) {
+export async function serviceCommand(serviceIds: string[], useExitCode: boolean, detail: boolean, componentFilter?: string[]) {
   const label = serviceIds.length === 1
     ? `checking ${serviceIds[0]}...`
     : `checking ${serviceIds.length} services...`;
@@ -27,7 +25,7 @@ export async function serviceCommand(serviceIds: string[], useExitCode: boolean,
     const fmt = getFormat(svc.status);
 
     if (detail) {
-      printDetailCard(svc, fmt);
+      printDetailCard(svc, fmt, componentFilter);
     } else {
       printCompactLine(svc, fmt);
     }
@@ -53,73 +51,97 @@ function printCompactLine(
 function printDetailCard(
   svc: ServiceStatus,
   fmt: { symbol: string; color: (s: string) => string },
+  componentFilter?: string[],
 ) {
   const label = svc.status.replace(/_/g, " ");
 
   console.log();
-  console.log(boxTop(WIDTH));
-  console.log(boxLine(
-    `${fmt.color(fmt.symbol)} ${chalk.bold(svc.name || svc.id)}  ${fmt.color(label)}`,
-    WIDTH,
-  ));
+  console.log(`${fmt.color(fmt.symbol)} ${chalk.bold(svc.name || svc.id)}  ${fmt.color(label)}`);
 
   if (svc.description) {
-    console.log(boxLine(chalk.dim(svc.description), WIDTH));
+    console.log(chalk.dim(`  ${svc.description}`));
   }
 
   // Uptime bar + percentages
   const weekLabel = uptimeWeekLabel(svc.uptime);
-  const uptimeLine = `  ${statusBar(svc.status, svc.uptime)} ${uptimeLabel(svc.status, svc.uptime)}` +
+  const uptimeLine = `  ${chalk.dim("Uptime")}  ${statusBar(svc.status, svc.uptime)} ${uptimeLabel(svc.status, svc.uptime)}` +
     (weekLabel ? `  ${weekLabel}` : "");
-  console.log(boxLine(uptimeLine, WIDTH));
+  console.log(uptimeLine);
 
-  // Response time
+  // Response time + last checked on one line
+  const parts: string[] = [];
   const respLabel = responseMsLabel(svc.responseMs);
-  if (respLabel) {
-    console.log(boxLine(`  ${respLabel}`, WIDTH));
-  }
-
-  // Last checked
-  if (svc.lastChecked) {
-    console.log(boxLine(`  ${chalk.dim("Checked: " + timeSince(svc.lastChecked))}`, WIDTH));
-  }
+  if (respLabel) parts.push(respLabel);
+  if (svc.lastChecked) parts.push(chalk.dim("Checked " + timeSince(svc.lastChecked)));
+  if (parts.length > 0) console.log(`  ${parts.join(chalk.dim("  ·  "))}`);
 
   // Timeline
   const tlBar = timelineBar(svc.timeline);
   if (tlBar) {
-    console.log(boxLine("", WIDTH));
-    console.log(boxLine(`  ${tlBar}`, WIDTH));
+    console.log();
+    console.log(`  ${tlBar}`);
   }
 
   if (svc.components && svc.components.length > 0) {
-    console.log(boxDivider(WIDTH));
-    console.log(boxLine(chalk.dim("Components"), WIDTH));
-    for (const comp of svc.components) {
-      const cfmt = getFormat(comp.status);
-      console.log(boxLine(
-        `  ${cfmt.color(cfmt.symbol)} ${comp.name}`,
-        WIDTH,
-      ));
+    const comps = componentFilter
+      ? svc.components.filter((c) => componentFilter.some((f) => c.name.toLowerCase().includes(f)))
+      : svc.components;
+
+    if (comps.length > 0) {
+      console.log();
+      const heading = componentFilter
+        ? chalk.dim(`Components (${comps.length}/${svc.components.length} matching)`)
+        : chalk.dim("Components");
+      console.log(`  ${heading}`);
+      for (const comp of comps) {
+        const cfmt = getFormat(comp.status);
+        console.log(`    ${cfmt.color(cfmt.symbol)} ${comp.name}`);
+      }
+
+      // Summary + show affected components outside the filter
+      if (componentFilter) {
+        const matchedIssues = comps.filter((c) => c.status !== "operational");
+        if (matchedIssues.length === 0) {
+          console.log(`  ${chalk.green("✓")} All ${comps.length} matched components operational`);
+        } else {
+          console.log(`  ${chalk.yellow("⚠")} ${matchedIssues.length} of ${comps.length} matched components have issues`);
+        }
+
+        const otherIssues = svc.components.filter(
+          (c) => c.status !== "operational" && !comps.includes(c),
+        );
+        if (otherIssues.length > 0) {
+          const MAX_SHOWN = 5;
+          console.log();
+          console.log(`  ${chalk.yellow("⚠")} ${chalk.dim(`${otherIssues.length} other component${otherIssues.length === 1 ? " has" : "s have"} issues:`)}`);
+          for (const comp of otherIssues.slice(0, MAX_SHOWN)) {
+            const cfmt = getFormat(comp.status);
+            const clabel = comp.status.replace(/_/g, " ");
+            console.log(`    ${cfmt.color(cfmt.symbol)} ${comp.name}  ${cfmt.color(clabel)}`);
+          }
+          if (otherIssues.length > MAX_SHOWN) {
+            console.log(chalk.dim(`    Run: netbeep ${svc.id} --detail`));
+          }
+        }
+      }
+    } else if (componentFilter) {
+      console.log();
+      console.log(`  ${chalk.dim("Components")}`);
+      console.log(chalk.yellow(`    No components matching: ${componentFilter.join(", ")}`));
     }
   }
 
   if (svc.incidents && svc.incidents.length > 0) {
-    console.log(boxDivider(WIDTH));
-    console.log(boxLine(chalk.dim("Recent Incidents"), WIDTH));
+    console.log();
+    console.log(`  ${chalk.dim("Recent Incidents")}`);
     for (const inc of svc.incidents.slice(0, 3)) {
       const age = timeSince(inc.timestamp);
-      console.log(boxLine(
-        `  ${chalk.yellow("›")} ${inc.title}`,
-        WIDTH,
-      ));
-      console.log(boxLine(
-        `    ${chalk.dim(inc.status)} ${chalk.dim("·")} ${chalk.dim(age)}`,
-        WIDTH,
-      ));
+      console.log(`    ${chalk.yellow("›")} ${inc.title}`);
+      console.log(`      ${chalk.dim(inc.status)} ${chalk.dim("·")} ${chalk.dim(age)}`);
     }
   }
 
-  console.log(boxBottom(WIDTH));
+  console.log();
 }
 
 function timeSince(ts: number): string {

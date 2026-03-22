@@ -2,13 +2,15 @@ import chalk from "chalk";
 import { fetchStatuses } from "../lib/fetch.js";
 import { getFormat } from "../lib/format.js";
 import { statusBar, uptimeLabel } from "../lib/box.js";
+import { filterByCategories } from "../lib/categories.js";
 
-export async function watchCommand(serviceIds: string[], intervalSec: number) {
+export async function watchCommand(serviceIds: string[], intervalSec: number, categoryFilter?: string[]) {
   const specific = serviceIds.length > 0;
 
   const render = async () => {
     try {
-      const { services, updatedAt } = await fetchStatuses(specific ? serviceIds : undefined);
+      const { services: allServices, updatedAt } = await fetchStatuses(specific ? serviceIds : undefined);
+      const services = categoryFilter ? filterByCategories(allServices, categoryFilter) : allServices;
       const entries = Object.values(services).sort((a, b) => {
         const aOp = a.status === "operational" ? 1 : 0;
         const bOp = b.status === "operational" ? 1 : 0;

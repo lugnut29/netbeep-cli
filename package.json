@@ -1,6 +1,6 @@
 {
   "name": "netbeep",
-  "version": "2.2.4",
+  "version": "2.3.1",
   "description": "Check live service status from the terminal",
   "type": "module",
   "bin": {

@@ -1,1 +1,1 @@
-export declare function dashboardCommand(): Promise<void>;
+export declare function dashboardCommand(categoryFilter?: string[]): Promise<void>;

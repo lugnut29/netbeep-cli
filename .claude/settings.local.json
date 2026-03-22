@@ -10,7 +10,31 @@
       "Bash(node dist/index.js github shopify)",
       "Bash(node dist/index.js nonexistent --exit-code)",
       "Bash(echo \"Exit code: $?\")",
-      "Bash(node dist/index.js --json)"
+      "Bash(node dist/index.js --json)",
+      "Bash(grep -E \"real-time|refresh|update|status|timeline\" /d/TEMDATA/Products/netbeep/components/*.tsx)",
+      "Bash(npx tsc:*)",
+      "Bash(npx tsx:*)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(node dist/index.js --category bogus)",
+      "Bash(node dist/index.js aws --category cloud)",
+      "Bash(node dist/index.js --category cloud)",
+      "Bash(node dist/index.js --category cloud,payments --json)",
+      "Bash(npx netbeep:*)",
+      "Bash(node -e \"const d=JSON.parse\\(require\\(''''fs''''\\).readFileSync\\(''''/dev/stdin'''',''''utf8''''\\)\\); console.log\\(''''Total services:'''', Object.keys\\(d.services\\).length\\); const cats={}; Object.values\\(d.services\\).forEach\\(s => { cats[s.category] = \\(cats[s.category]||0\\)+1 }\\); console.log\\(''''By category:'''', cats\\)\")",
+      "Bash(node dist/index.js apple-developer --filter cloudkit)",
+      "Bash(node dist/index.js --filter cloudkit)",
+      "Bash(node dist/index.js apple-developer --detail)",
+      "Bash(node dist/index.js apple-developer --filter \"cloudkit,app store\")",
+      "Bash(node -e \"process.stdin.setEncoding\\(''''utf8''''\\); let d=''''''''; process.stdin.on\\(''''data'''',c=>d+=c\\); process.stdin.on\\(''''end'''',\\(\\)=>{const j=JSON.parse\\(d\\); Object.keys\\(j.services\\).filter\\(k=>k.includes\\(''''apple''''\\)\\).forEach\\(k=>console.log\\(k\\)\\)}\\)\")",
+      "Bash(node -e \"process.stdin.setEncoding\\(''''utf8''''\\); let d=''''''''; process.stdin.on\\(''''data'''',c=>d+=c\\); process.stdin.on\\(''''end'''',\\(\\)=>{const j=JSON.parse\\(d\\); Object.keys\\(j.services\\).forEach\\(k=>console.log\\(k\\)\\)}\\)\")",
+      "Bash(node -e \"fetch\\(''https://netbeep.com/api/status''\\).then\\(r=>r.json\\(\\)\\).then\\(d=>{Object.keys\\(d.services\\).slice\\(0,20\\).forEach\\(k=>console.log\\(k\\)\\)}\\)\")",
+      "Bash(node -e \"fetch\\(''https://netbeep.com/api/status''\\).then\\(r=>r.json\\(\\)\\).then\\(d=>{Object.keys\\(d.services\\).filter\\(k=>k.includes\\(''apple''\\)\\).forEach\\(k=>console.log\\(k\\)\\)}\\)\")",
+      "Bash(node -e \"fetch\\(''https://netbeep.com/api/status''\\).then\\(r=>r.json\\(\\)\\).then\\(d=>{const keys=Object.keys\\(d.services\\); keys.forEach\\(k=>{if\\(d.services[k].name && d.services[k].name.toLowerCase\\(\\).includes\\(''apple''\\)\\) console.log\\(k, d.services[k].name\\)}\\)}\\)\")",
+      "Bash(node -e \"fetch\\(''https://netbeep.com/api/status''\\).then\\(r=>r.json\\(\\)\\).then\\(d=>{for\\(const [k,v] of Object.entries\\(d.services\\)\\){if\\(v.components && v.components.length > 5\\) console.log\\(k, v.name, v.components.length+''c'', v.status\\)}}\\)\")",
+      "Bash(node dist/index.js cloudflare --filter \"api,dash\")",
+      "Bash(node dist/index.js -c cloud)",
+      "Bash(npm version:*)",
+      "Bash(node dist/index.js --help)"
     ]
   }
 }

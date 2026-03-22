@@ -13,6 +13,7 @@ export declare function boxTop(width: number): string;
 export declare function boxBottom(width: number): string;
 export declare function boxDivider(width: number): string;
 export declare function stripAnsi(str: string): string;
+export declare function displayWidth(str: string): number;
 export declare function statusBar(status: string, uptime?: {
     day: number;
     week: number;
